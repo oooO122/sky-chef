@@ -1,0 +1,5 @@
+.claude/
+*.py
+test_render.png
+_sprite_viewer.html
+rules.md
