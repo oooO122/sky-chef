@@ -7,8 +7,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="apple-touch-icon" href="./assets/icon-192.png">
   <title>飞机大厨 Sky Chef</title>
   <style>
     * {
@@ -38,7 +36,6 @@
 
 <body>
   <canvas id="c"></canvas>
-  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}</script>
   <script>
     const C = document.getElementById('c'), X = C.getContext('2d');
     const GW = 480, GH = 850;
