@@ -338,7 +338,7 @@
     function addFx(text, x, y, color, size) { game.effects.push({ text, x, y, t: 1.8, color: color || '#FFD200', size: size || 'normal' }); }
     function getCanvasPos(e) { let r = C.getBoundingClientRect(), cx, cy; if (e.touches && e.touches.length) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; } return { x: (cx - r.left) / scale, y: (cy - r.top) / scale }; }
     function getStars(lvlId, score) { let c = findLevel(lvlId); if (!c) return 0; if (score >= c.g3) return 3; if (score >= c.g2) return 2; if (score >= c.g1) return 1; return 0; }
-    function getAvailFoodsForStation(st) { if (st === 'board') return game.availFoods.filter(f => FOODS[f].station === 'board' || (FOODS[f].prep && game.tray.includes('prep_'+f))); return game.availFoods.filter(f => FOODS[f].station === st); } function canCookFood(food, st) { if (!FOODS[food].prep) return true; if (st === 'board') return true; return game.tray.includes('prep_'+food); }
+    function getAvailFoodsForStation(st) { if (st === 'board') return game.availFoods.filter(f => FOODS[f].station === 'board' || FOODS[f].prep); return game.availFoods.filter(f => FOODS[f].station === st); } function canCookFood(food, st) { if (!FOODS[food].prep) return true; if (st === 'board') return true; return game.tray.includes('prep_'+food); }
 
     function handleGameClick(px, py) {
       if (game.over) return;
