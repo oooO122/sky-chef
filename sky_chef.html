@@ -371,6 +371,7 @@
         let eOpts = [{ amt: 10, cost: 2 }, { amt: 30, cost: 5 }, { amt: 60, cost: 8 }];
         for (let ei = 0; ei < eOpts.length; ei++) { let opt = eOpts[ei], bx = 30 + ei * 155, by = ey + 32; if (px > bx && px < bx + 140 && py > by && py < by + 48) { if (save.gems >= opt.cost) { save.gems -= opt.cost; save.energy = Math.min(save.maxEnergy, save.energy + opt.amt); saveToDisk(); SFX.coin(); addFx('+' + opt.amt + '体力!', GW / 2, by, '#4CAF50'); } else { SFX.fail(); } return; } }
         let fullBy = ey + 88; if (px > 30 && px < GW - 30 && py > fullBy && py < fullBy + 42) { let fullCost = 10; if (save.gems >= fullCost && save.energy < save.maxEnergy) { save.gems -= fullCost; save.energy = save.maxEnergy; saveToDisk(); SFX.coin(); addFx('体力回满!', GW / 2, fullBy, '#FFD200'); } else { SFX.fail(); } return; }
+        let rby = fullBy + 70; if (px > GW / 2 - 70 && px < GW / 2 + 70 && py > rby && py < rby + 38) { if (G._resetConfirm) { localStorage.removeItem(SAVE_KEY); location.reload(); } else { G._resetConfirm = true; SFX.click(); setTimeout(() => { G._resetConfirm = false; }, 3000); } return; }
         return;
       }
       if (G.scene === 'game') { handleGameClick(px, py); return; }
@@ -714,6 +715,12 @@
       let fcGrd = X.createLinearGradient(30, fullBy, GW - 30, fullBy); fcGrd.addColorStop(0, canFull ? 'rgba(255,180,40,0.6)' : 'rgba(50,50,50,0.6)'); fcGrd.addColorStop(1, canFull ? 'rgba(200,140,30,0.6)' : 'rgba(40,40,40,0.6)');
       drawRR(30, fullBy, GW - 60, 42, 12, fcGrd, 'rgba(255,210,0,0.2)');
       X.fillStyle = '#FFD200'; X.font = 'bold 14px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText('💎' + fullCost + ' → ⚡ 回满体力', GW / 2, fullBy + 21);
+      let rby = fullBy + 70;
+      X.fillStyle = 'rgba(255,100,100,0.12)'; drawRR(GW / 2 - 70, rby, 140, 38, 12, X.fillStyle, 'rgba(255,80,80,0.3)');
+      X.fillStyle = G._resetConfirm ? '确认重置? 再点一次' : '🗑️ 重置存档';
+      X.font = 'bold 12px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+      X.fillStyle = G._resetConfirm ? '#FF4444' : 'rgba(255,255,255,0.5)';
+      X.fillText(G._resetConfirm ? '⚠️ 确认重置? 再点一次' : '🗑️ 重置存档', GW / 2, rby + 19);
       X.restore();
     }
 
