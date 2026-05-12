@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>飞机大厨 Sky Chef</title>
   <style>
     * {
@@ -47,38 +50,33 @@
     function regenEnergy() { let now = Date.now(), el = (now - save.lastEnergyTime) / 1000, rg = Math.floor(el / 180); if (rg > 0 && save.energy < save.maxEnergy) { save.energy = Math.min(save.maxEnergy, save.energy + rg); save.lastEnergyTime = now; saveToDisk(); } }
     regenEnergy();
 
-    const IMG = { chefIdle: null, chefCook: null, chefDone: null, chefIcon: null, foodIcons: null, foodSheet: null, foodSrc: {}, tiles: {}, npcSrc: {}, npcSheet: null };
+    const IMG = { chefIdle: null, chefCook: null, chefDone: null, chefIcon: null, tiles: {}, npcImgs: {} };
     function loadImages() {
       let ci0 = new Image(); ci0.onload = function () { IMG.chefIdle = ci0; }; ci0.onerror = function () { }; ci0.src = 'assets/sprites/chef/Chef_W1.png';
       let ci1 = new Image(); ci1.onload = function () { IMG.chefCook = ci1; }; ci1.onerror = function () { }; ci1.src = 'assets/sprites/chef/Chef_A1.png';
       let ci2 = new Image(); ci2.onload = function () { IMG.chefDone = ci2; }; ci2.onerror = function () { }; ci2.src = 'assets/sprites/chef/Chef_B1.png';
       let ci3 = new Image(); ci3.onload = function () { IMG.chefIcon = ci3; }; ci3.onerror = function () { }; ci3.src = 'assets/sprites/chef/Chef_B_Icon.png';
-      // Load food icon sprite sheets
-      let fi = new Image(); fi.onload = function () { IMG.foodIcons = fi; }; fi.onerror = function () { }; fi.src = 'assets/sprites/icons_food.png';
-      let fs = new Image(); fs.onload = function () { IMG.foodSheet = fs; }; fs.onerror = function () { }; fs.src = 'assets/sprites/food_sprites_sheet.png';
-      // Map food id → {sheet:'icons'|'sheet', sx, sy, sw:32, sh:32}
-      // Using the best match from both sprite sheets
-      const S = 'sheet', I = 'icons';
-      const srcMap = {
-        coffee: [I, 2, 2], juice: [S, 1, 3], smoothie: [S, 2, 3], milkshake: [S, 3, 2],
-        apple: [I, 2, 0], orange: [I, 1, 0], grape: [S, 1, 2], watermelon: [I, 3, 0],
-        fries: [I, 0, 4], nuggets: [S, 0, 1], chicken: [S, 0, 1], tempura: [S, 3, 1],
-        burger: [I, 0, 3], pizza: [I, 2, 3], steak: [S, 2, 1], lobster: [S, 3, 1],
-        donut: [I, 1, 1], ice_cream: [I, 2, 1], pudding: [S, 2, 2], cake: [S, 2, 2]
+      const foodFiles = {
+        coffee: '咖啡.png', juice: '果汁.png', smoothie: '冰沙.png', milkshake: '奶昔.png',
+        apple: '苹果.png', orange: '橙子.png', grape: '葡萄.png', watermelon: '西瓜.png',
+        fries: '薯条.png', nuggets: '鸡块.png', chicken: '鸡腿.png', tempura: '天妇罗.png',
+        burger: '汉堡.png', pizza: '披萨.png', steak: '牛排.png', lobster: '小龙虾.png',
+        donut: '甜甜圈.png', ice_cream: '甜筒.png', pudding: '果冻.png', cake: '蛋糕.png'
       };
-      for (let k in srcMap) {
-        let v = srcMap[k];
-        IMG.foodSrc[k] = { sheet: v[0], sx: v[1] * 32, sy: v[2] * 32, sw: 32, sh: 32 };
+      for (let k in foodFiles) {
+        let img = new Image();
+        img.onload = function () { IMG.tiles[k] = img; };
+        img.onerror = function () { };
+        img.src = 'assets/sprites/' + foodFiles[k];
       }
-      // Load NPC passenger sprites
-      let npc = new Image(); npc.onload = function () { IMG.npcSheet = npc; }; npc.onerror = function () { }; npc.src = 'assets/sprites/npc/npc_display.png';
-      // 5 cols x 2 rows, each ~51x138, 10 passenger types
-      // Character boundaries from density analysis
-      const npcRects = [
-        { sx: 8, sy: 5, sw: 47, sh: 140 }, { sx: 55, sy: 5, sw: 56, sh: 140 }, { sx: 111, sy: 5, sw: 51, sh: 140 }, { sx: 162, sy: 5, sw: 57, sh: 140 }, { sx: 219, sy: 5, sw: 45, sh: 140 },
-        { sx: 8, sy: 145, sw: 47, sh: 136 }, { sx: 55, sy: 145, sw: 56, sh: 136 }, { sx: 111, sy: 145, sw: 51, sh: 136 }, { sx: 162, sy: 145, sw: 57, sh: 136 }, { sx: 219, sy: 145, sw: 45, sh: 136 }
-      ];
-      for (let i = 0; i < 10; i++)IMG.npcSrc[i] = npcRects[i];
+      // Load 一二布布 NPC emotion images
+      const npcEmotions = { normal: 'normal.png', happy: 'happy.png', surprised: 'surprised.png', love: 'love.png', angry: 'angry.png', sad: 'sad.png' };
+      for (let k in npcEmotions) {
+        let img = new Image();
+        img.onload = function () { IMG.npcImgs[k] = img; };
+        img.onerror = function () { };
+        img.src = 'assets/sprites/npc/yierbubu/' + npcEmotions[k];
+      }
     }
     loadImages();
 
@@ -100,7 +98,7 @@
       fever() { for (let i = 0; i < 5; i++)setTimeout(() => this.beep(440 + i * 110, 0.12, 'sine', 0.25), i * 60); },
       fail() { this.beep(300, 0.2, 'sawtooth', 0.2); setTimeout(() => this.beep(200, 0.3, 'sawtooth', 0.2), 150); },
       start() { this.beep(523, 0.1, 'sine', 0.2); setTimeout(() => this.beep(659, 0.1, 'sine', 0.2), 100); setTimeout(() => this.beep(784, 0.15, 'sine', 0.25), 200); },
-      playCook(st) { if (st === 'drink') this.coffeeSnd(); else if (st === 'fryer') this.boil(); else if (st === 'oven') this.cook(); },
+      playCook(st) { if (st === 'drink' || st === 'fridge') this.coffeeSnd(); else if (st === 'fryer') this.boil(); else if (st === 'oven') this.cook(); else if (st === 'board') this.chop(); },
       _bgmEl: null, playBgm() { if (this._bgmEl) return; let a = new Audio('assets/audio/bgm_cute_town.mp3'); a.loop = true; a.volume = 0.2; a.play().then(() => { this._bgmEl = a; }).catch(() => { this._bgmOn = true; this._playSynthBgm(); }); },
       _bgmOn: false, _bgmTimer: null, _playSynthBgm() { if (!this._bgmOn) return; let notes = [262, 294, 330, 349, 392, 349, 330, 294, 262, 294, 330, 392, 440, 392, 349, 330]; notes.forEach((n, i) => { setTimeout(() => { if (this._bgmOn) this.beep(n, 0.25, 'sine', 0.06); }, i * 300); }); this._bgmTimer = setTimeout(() => this._playSynthBgm(), notes.length * 300); },
       stopBgm() { this._bgmOn = false; if (this._bgmTimer) clearTimeout(this._bgmTimer); if (this._bgmEl) { this._bgmEl.pause(); this._bgmEl = null; } },
@@ -112,63 +110,63 @@
     const CHAPTERS = [
       {
         id: 1, name: '国内短途', icon: '🛫', theme: '#87CEEB', theme2: '#5BA3C9', levels: [
-          { id: 101, name: '启程', g1: 60, g2: 120, g3: 200, time: 80, pat: 26, waveGap: 5, unlocks: { drink: true } },
-          { id: 102, name: '巡航', g1: 80, g2: 150, g3: 250, time: 90, pat: 24, waveGap: 4.5, unlocks: {} },
-          { id: 103, name: '降落', g1: 100, g2: 180, g3: 300, time: 95, pat: 23, waveGap: 4.2, unlocks: {} },
+          { id: 101, name: '启程', g1: 60, g2: 120, g3: 200, time: 80, pat: 26, waveGap: 5, unlocks: { drink: true }, stations: ['drink','board','fridge'] },
+          { id: 102, name: '巡航', g1: 80, g2: 150, g3: 250, time: 90, pat: 24, waveGap: 4.5, unlocks: {}, stations: ['drink','board','fridge'] },
+          { id: 103, name: '降落', g1: 100, g2: 180, g3: 300, time: 95, pat: 23, waveGap: 4.2, unlocks: {}, stations: ['drink','board','fridge'] },
         ]
       },
       {
         id: 2, name: '早班飞机', icon: '🌅', theme: '#FFD700', theme2: '#D4A800', levels: [
-          { id: 201, name: '起飞', g1: 120, g2: 220, g3: 350, time: 100, pat: 24, waveGap: 5, unlocks: { fruit: true } },
-          { id: 202, name: '巡航', g1: 150, g2: 280, g3: 420, time: 105, pat: 23, waveGap: 4.5, unlocks: {} },
-          { id: 203, name: '降落', g1: 180, g2: 320, g3: 480, time: 110, pat: 22, waveGap: 4.2, unlocks: {} },
+          { id: 201, name: '起飞', g1: 120, g2: 220, g3: 350, time: 100, pat: 24, waveGap: 5, unlocks: { fruit: true }, stations: ['drink','fryer','board'] },
+          { id: 202, name: '巡航', g1: 150, g2: 280, g3: 420, time: 105, pat: 23, waveGap: 4.5, unlocks: {}, stations: ['drink','fryer','board'] },
+          { id: 203, name: '降落', g1: 180, g2: 320, g3: 480, time: 110, pat: 22, waveGap: 4.2, unlocks: {}, stations: ['drink','fryer','board'] },
         ]
       },
       {
         id: 3, name: '午餐航班', icon: '🍱', theme: '#FF9600', theme2: '#CC7800', levels: [
-          { id: 301, name: '起飞', g1: 180, g2: 320, g3: 480, time: 100, pat: 23, waveGap: 5, unlocks: { fried: true } },
-          { id: 302, name: '巡航', g1: 220, g2: 380, g3: 550, time: 105, pat: 22, waveGap: 4.5, unlocks: {} },
-          { id: 303, name: '降落', g1: 260, g2: 440, g3: 620, time: 110, pat: 21, waveGap: 4.2, unlocks: {} },
+          { id: 301, name: '起飞', g1: 180, g2: 320, g3: 480, time: 100, pat: 23, waveGap: 5, unlocks: { fried: true }, stations: ['fryer','oven','board'] },
+          { id: 302, name: '巡航', g1: 220, g2: 380, g3: 550, time: 105, pat: 22, waveGap: 4.5, unlocks: {}, stations: ['fryer','oven','board'] },
+          { id: 303, name: '降落', g1: 260, g2: 440, g3: 620, time: 110, pat: 21, waveGap: 4.2, unlocks: {}, stations: ['fryer','oven','board'] },
         ]
       },
       {
         id: 4, name: '下午茶', icon: '🫖', theme: '#FFB6C1', theme2: '#D98A95', levels: [
-          { id: 401, name: '起飞', g1: 220, g2: 400, g3: 580, time: 110, pat: 22, waveGap: 5, unlocks: { dessert: true } },
-          { id: 402, name: '巡航', g1: 260, g2: 460, g3: 650, time: 115, pat: 21, waveGap: 4.5, unlocks: {} },
-          { id: 403, name: '降落', g1: 300, g2: 520, g3: 720, time: 120, pat: 20, waveGap: 4.2, unlocks: {} },
+          { id: 401, name: '起飞', g1: 220, g2: 400, g3: 580, time: 110, pat: 22, waveGap: 5, unlocks: { dessert: true }, stations: ['drink','oven','fridge'] },
+          { id: 402, name: '巡航', g1: 260, g2: 460, g3: 650, time: 115, pat: 21, waveGap: 4.5, unlocks: {}, stations: ['drink','oven','fridge'] },
+          { id: 403, name: '降落', g1: 300, g2: 520, g3: 720, time: 120, pat: 20, waveGap: 4.2, unlocks: {}, stations: ['drink','oven','fridge'] },
         ]
       },
       {
         id: 5, name: '国际航线', icon: '🌍', theme: '#9370DB', theme2: '#7050B0', levels: [
-          { id: 501, name: '起飞', g1: 300, g2: 500, g3: 720, time: 110, pat: 21, waveGap: 4.5, unlocks: { grill: true } },
-          { id: 502, name: '巡航', g1: 350, g2: 580, g3: 820, time: 115, pat: 20, waveGap: 4.2, unlocks: {} },
-          { id: 503, name: '降落', g1: 400, g2: 650, g3: 900, time: 120, pat: 19, waveGap: 4.0, unlocks: {} },
-          { id: 504, name: '终点', g1: 450, g2: 720, g3: 1000, time: 125, pat: 18, waveGap: 3.8, unlocks: {} },
+          { id: 501, name: '起飞', g1: 300, g2: 500, g3: 720, time: 110, pat: 21, waveGap: 4.5, unlocks: { grill: true }, stations: ['fryer','oven','fridge'] },
+          { id: 502, name: '巡航', g1: 350, g2: 580, g3: 820, time: 115, pat: 20, waveGap: 4.2, unlocks: {}, stations: ['fryer','oven','fridge'] },
+          { id: 503, name: '降落', g1: 400, g2: 650, g3: 900, time: 120, pat: 19, waveGap: 4.0, unlocks: {}, stations: ['fryer','oven','fridge'] },
+          { id: 504, name: '终点', g1: 450, g2: 720, g3: 1000, time: 125, pat: 18, waveGap: 3.8, unlocks: {}, stations: ['fryer','oven','fridge'] },
         ]
       },
       {
         id: 6, name: '商务舱', icon: '💼', theme: '#4169E1', theme2: '#2E4CB0', levels: [
-          { id: 601, name: '起飞', g1: 400, g2: 650, g3: 900, time: 120, pat: 20, waveGap: 4.5, unlocks: {} },
-          { id: 602, name: '巡航', g1: 450, g2: 720, g3: 1000, time: 125, pat: 19, waveGap: 4.2, unlocks: {} },
-          { id: 603, name: '降落', g1: 500, g2: 800, g3: 1100, time: 130, pat: 18, waveGap: 4.0, unlocks: {} },
-          { id: 604, name: '终点', g1: 550, g2: 880, g3: 1200, time: 135, pat: 17, waveGap: 3.8, unlocks: {} },
+          { id: 601, name: '起飞', g1: 400, g2: 650, g3: 900, time: 120, pat: 20, waveGap: 4.5, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 602, name: '巡航', g1: 450, g2: 720, g3: 1000, time: 125, pat: 19, waveGap: 4.2, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 603, name: '降落', g1: 500, g2: 800, g3: 1100, time: 130, pat: 18, waveGap: 4.0, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 604, name: '终点', g1: 550, g2: 880, g3: 1200, time: 135, pat: 17, waveGap: 3.8, unlocks: {}, stations: ['drink','fryer','oven'] },
         ]
       },
       {
         id: 7, name: '头等舱', icon: '👑', theme: '#FF1493', theme2: '#CC0F75', levels: [
-          { id: 701, name: '起飞', g1: 500, g2: 800, g3: 1100, time: 120, pat: 18, waveGap: 4.0, unlocks: {} },
-          { id: 702, name: '巡航', g1: 550, g2: 880, g3: 1200, time: 125, pat: 17, waveGap: 3.8, unlocks: {} },
-          { id: 703, name: '降落', g1: 600, g2: 960, g3: 1300, time: 130, pat: 16, waveGap: 3.5, unlocks: {} },
-          { id: 704, name: '终点', g1: 650, g2: 1000, g3: 1400, time: 135, pat: 15, waveGap: 3.3, unlocks: {} },
+          { id: 701, name: '起飞', g1: 500, g2: 800, g3: 1100, time: 120, pat: 18, waveGap: 4.0, unlocks: {}, stations: ['drink','board','fridge'] },
+          { id: 702, name: '巡航', g1: 550, g2: 880, g3: 1200, time: 125, pat: 17, waveGap: 3.8, unlocks: {}, stations: ['drink','board','fridge'] },
+          { id: 703, name: '降落', g1: 600, g2: 960, g3: 1300, time: 130, pat: 16, waveGap: 3.5, unlocks: {}, stations: ['drink','board','fridge'] },
+          { id: 704, name: '终点', g1: 650, g2: 1000, g3: 1400, time: 135, pat: 15, waveGap: 3.3, unlocks: {}, stations: ['drink','board','fridge'] },
         ]
       },
       {
         id: 8, name: '环球飞行', icon: '✈️', theme: '#FF4500', theme2: '#CC3700', levels: [
-          { id: 801, name: '亚洲', g1: 600, g2: 960, g3: 1300, time: 125, pat: 17, waveGap: 3.8, unlocks: {} },
-          { id: 802, name: '欧洲', g1: 650, g2: 1000, g3: 1400, time: 130, pat: 16, waveGap: 3.5, unlocks: {} },
-          { id: 803, name: '美洲', g1: 700, g2: 1100, g3: 1500, time: 130, pat: 15, waveGap: 3.3, unlocks: {} },
-          { id: 804, name: '大洋洲', g1: 750, g2: 1200, g3: 1600, time: 135, pat: 14, waveGap: 3.0, unlocks: {} },
-          { id: 805, name: '环球终点', g1: 800, g2: 1300, g3: 1800, time: 140, pat: 13, waveGap: 2.8, unlocks: {} },
+          { id: 801, name: '亚洲', g1: 600, g2: 960, g3: 1300, time: 125, pat: 17, waveGap: 3.8, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 802, name: '欧洲', g1: 650, g2: 1000, g3: 1400, time: 130, pat: 16, waveGap: 3.5, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 803, name: '美洲', g1: 700, g2: 1100, g3: 1500, time: 130, pat: 15, waveGap: 3.3, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 804, name: '大洋洲', g1: 750, g2: 1200, g3: 1600, time: 135, pat: 14, waveGap: 3.0, unlocks: {}, stations: ['drink','fryer','oven'] },
+          { id: 805, name: '环球终点', g1: 800, g2: 1300, g3: 1800, time: 140, pat: 13, waveGap: 2.8, unlocks: {}, stations: ['drink','fryer','oven'] },
         ]
       },
     ];
@@ -181,6 +179,8 @@
       oven_speed: { name: '烤箱加速', icon: '🔥', desc: '烹饪时间 -10%/级', maxLv: 5, costs: [50, 120, 250, 500, 1000] },
       fryer_speed: { name: '炸锅加速', icon: '🍳', desc: '烹饪时间 -10%/级', maxLv: 5, costs: [50, 120, 250, 500, 1000] },
       drink_speed: { name: '饮料加速', icon: '🥤', desc: '制作时间 -10%/级', maxLv: 5, costs: [30, 80, 180, 350, 700] },
+      board_speed: { name: '砧板加速', icon: '🔪', desc: '制作时间 -10%/级', maxLv: 5, costs: [30, 80, 180, 350, 700] },
+      fridge_speed:{ name: '甜品加速', icon: '🍰', desc: '制作时间 -10%/级', maxLv: 5, costs: [30, 80, 180, 350, 700] },
       tray_cap: { name: '托盘扩容', icon: '🍽️', desc: '容量 +1/级', maxLv: 3, costs: [80, 200, 500] },
       patience: { name: '耐心延长', icon: '💖', desc: '耐心 +15%/级', maxLv: 5, costs: [60, 150, 300, 600, 1200] },
       tip: { name: '小费加成', icon: '💰', desc: '收入 +8%/级', maxLv: 5, costs: [100, 250, 500, 1000, 2000] },
@@ -197,12 +197,12 @@
         name: '饮料', icon: '🥤', station: 'drink', tiers: [
           { id: 'coffee', name: '咖啡', time: 2.0, price: 10, emoji: '☕', color: '#8B5E3C', color2: '#6B3E1C' },
           { id: 'juice', name: '果汁', time: 1.8, price: 15, emoji: '🧃', color: '#FF8C00', color2: '#CC7000' },
-          { id: 'smoothie', name: '冰沙', time: 2.2, price: 22, emoji: '🥤', color: '#FF6B8A', color2: '#CC4470' },
-          { id: 'milkshake', name: '奶昔', time: 2.5, price: 32, emoji: '🍨', color: '#F5DEB3', color2: '#D4B88C' },
+          { id: 'smoothie', name: '冰沙', time: 2.2, price: 22, emoji: '🥤', color: '#FF6B8A', color2: '#CC4470', prep: true },
+          { id: 'milkshake', name: '奶昔', time: 2.5, price: 32, emoji: '🍨', color: '#F5DEB3', color2: '#D4B88C', prep: true },
         ]
       },
       fruit: {
-        name: '水果', icon: '🍎', station: 'drink', tiers: [
+        name: '水果', icon: '🍎', station: 'board', tiers: [
           { id: 'apple', name: '苹果', time: 1.5, price: 8, emoji: '🍎', color: '#FF3B30', color2: '#CC2A20' },
           { id: 'orange', name: '橙子', time: 1.6, price: 14, emoji: '🍊', color: '#FF9500', color2: '#CC7700' },
           { id: 'grape', name: '葡萄', time: 2.0, price: 20, emoji: '🍇', color: '#9B59B6', color2: '#7A3E95' },
@@ -213,20 +213,20 @@
         name: '炸物', icon: '🍳', station: 'fryer', tiers: [
           { id: 'fries', name: '薯条', time: 3.0, price: 15, emoji: '🍟', color: '#FFD700', color2: '#CCA800' },
           { id: 'nuggets', name: '鸡块', time: 3.2, price: 22, emoji: '🍗', color: '#FFB347', color2: '#CC8A30' },
-          { id: 'chicken', name: '炸鸡', time: 4.0, price: 30, emoji: '🍖', color: '#C87832', color2: '#A06028' },
-          { id: 'tempura', name: '天妇罗', time: 4.5, price: 40, emoji: '🍤', color: '#F0C040', color2: '#CCA030' },
+          { id: 'chicken', name: '炸鸡', time: 4.0, price: 30, emoji: '🍖', color: '#C87832', color2: '#A06028', prep: true },
+          { id: 'tempura', name: '天妇罗', time: 4.5, price: 40, emoji: '🍤', color: '#F0C040', color2: '#CCA030', prep: true },
         ]
       },
       grill: {
         name: '烤物', icon: '🔥', station: 'oven', tiers: [
-          { id: 'burger', name: '汉堡', time: 4.0, price: 25, emoji: '🍔', color: '#FF9600', color2: '#CC7800' },
-          { id: 'pizza', name: '披萨', time: 4.5, price: 35, emoji: '🍕', color: '#E84830', color2: '#B83020' },
-          { id: 'steak', name: '牛排', time: 5.5, price: 48, emoji: '🥩', color: '#B43232', color2: '#8C2222' },
-          { id: 'lobster', name: '龙虾', time: 6.0, price: 65, emoji: '🦞', color: '#FF6B4A', color2: '#CC5030' },
+          { id: 'burger', name: '汉堡', time: 4.0, price: 25, emoji: '🍔', color: '#FF9600', color2: '#CC7800', prep: true },
+          { id: 'pizza', name: '披萨', time: 4.5, price: 35, emoji: '🍕', color: '#E84830', color2: '#B83020', prep: true },
+          { id: 'steak', name: '牛排', time: 5.5, price: 48, emoji: '🥩', color: '#B43232', color2: '#8C2222', prep: true },
+          { id: 'lobster', name: '龙虾', time: 6.0, price: 65, emoji: '🦞', color: '#FF6B4A', color2: '#CC5030', prep: true },
         ]
       },
       dessert: {
-        name: '甜点', icon: '🍰', station: 'drink', tiers: [
+        name: '甜点', icon: '🍰', station: 'fridge', tiers: [
           { id: 'donut', name: '甜甜圈', time: 2.0, price: 12, emoji: '🍩', color: '#F5A0D0', color2: '#D080A0' },
           { id: 'ice_cream', name: '冰淇淋', time: 2.2, price: 20, emoji: '🍦', color: '#F5A0D0', color2: '#D070A0' },
           { id: 'pudding', name: '布丁', time: 2.8, price: 30, emoji: '🍮', color: '#FFD79A', color2: '#D4A860' },
@@ -267,11 +267,13 @@
       save.achievements = a; saveToDisk();
     }
     const STATIONS = {
-      drink: { name: '饮料机', color: '#5BB8E8', color2: '#3A8AB8', x: 80, y: 640, icon: '🥤' },
-      fryer: { name: '炸 锅', color: '#FFCC44', color2: '#D4A020', x: 240, y: 640, icon: '🍳' },
-      oven: { name: '烤 箱', color: '#FF9944', color2: '#CC7722', x: 400, y: 640, icon: '🔥' },
+      drink: { name: '饮料机', color: '#5BB8E8', color2: '#3A8AB8', icon: '🥤' },
+      board: { name: '砧 板', color: '#8BC34A', color2: '#689F38', icon: '🔪' },
+      fryer: { name: '炸 锅', color: '#FFCC44', color2: '#D4A020', icon: '🍳' },
+      oven:  { name: '烤 箱', color: '#FF9944', color2: '#CC7722', icon: '🔥' },
+      fridge:{ name: '甜品台', color: '#FF80AB', color2: '#E05780', icon: '🍰' },
     };
-    const SEATS = [{ x: 80, y: 240 }, { x: 200, y: 240 }, { x: 320, y: 240 }, { x: 440, y: 240 }];
+    const SEATS = [{ x: 30, y: 240 }, { x: 150, y: 240 }, { x: 270, y: 240 }, { x: 390, y: 240 }];
     const PASSENGER_TYPES = [
       { skin: '#F5D0B0', hair: '#4A3728', shirt: '#4A90D9', pants: '#2C3E50', bodyW: 30, style: 'short' },
       { skin: '#F0C8A0', hair: '#8B4513', shirt: '#E74C3C', pants: '#34495E', bodyW: 28, style: 'long' },
@@ -291,24 +293,30 @@
     function initGame(lvlId) {
       let cfg = findLevel(lvlId); if (!cfg) return; let trayCap = 4 + (save.upgrades.tray_cap || 0);
       let patBonus = 1 + (save.upgrades.patience || 0) * 0.15; let tipBonus = 1 + (save.upgrades.tip || 0) * 0.08;
-      let speedMul = { oven: 1 - (save.upgrades.oven_speed || 0) * 0.1, fryer: 1 - (save.upgrades.fryer_speed || 0) * 0.1, drink: 1 - (save.upgrades.drink_speed || 0) * 0.1 };
+      let speedMul = { oven: 1 - (save.upgrades.oven_speed || 0) * 0.1, fryer: 1 - (save.upgrades.fryer_speed || 0) * 0.1, drink: 1 - (save.upgrades.drink_speed || 0) * 0.1, board: 1 - (save.upgrades.board_speed || 0) * 0.1, fridge: 1 - (save.upgrades.fridge_speed || 0) * 0.1 };
       // Apply level unlocks to foodUpgrades
       if (cfg.unlocks) { for (let ck in cfg.unlocks) { if (!save.foodUpgrades[ck] || save.foodUpgrades[ck] < 1) save.foodUpgrades[ck] = 1; } }
       saveToDisk();
-      // Build available foods from categories + upgrades
+      // Build available foods from categories + upgrades, only for active stations
+      let activeStations = (cfg.stations && cfg.stations.length) ? cfg.stations : ['drink', 'fryer', 'oven'];
       let availFoods = [];
-      for (let ck in FOOD_CATEGORIES) { let cat = FOOD_CATEGORIES[ck]; let lv = save.foodUpgrades[ck] || 0; for (let i = 0; i < lv && i < cat.tiers.length; i++)availFoods.push(cat.tiers[i].id); }
+      for (let ck in FOOD_CATEGORIES) { let cat = FOOD_CATEGORIES[ck]; if (!activeStations.includes(cat.station)) continue; let lv = save.foodUpgrades[ck] || 0; for (let i = 0; i < lv && i < cat.tiers.length; i++) { let t = cat.tiers[i]; if (t.prep && !activeStations.includes('board')) continue; availFoods.push(t.id); } }
       game = {
         cfg, score: 0, combo: 0, comboTimer: 0, fever: false, feverTimer: 0, paused: false, chefFrame: 0, chefTimer: 0, timer: cfg.time, served: 0, lost: 0,
         stations: {}, passengers: [null, null, null, null], tray: [], trayCap, waveCd: 2, waveN: 0, over: false,
-        effects: [], particles: [], powerups: [], activePowerup: null, availFoods, activeMenu: null, menuBtns: [], patBonus, tipBonus, speedMul
+        effects: [], particles: [], powerups: [], activePowerup: null, availFoods, activeMenu: null, menuBtns: [], patBonus, tipBonus, speedMul, coinFlies: []
       };
-      for (let t in STATIONS) game.stations[t] = { type: t, cooking: false, foodType: null, progress: 0, cookTime: 0, done: false, speedMul: speedMul[t] || 1 };
+      let stPos = [80, 240, 400];
+      for (let i = 0; i < activeStations.length; i++) {
+        let t = activeStations[i];
+        game.stations[t] = { type: t, cooking: false, foodType: null, progress: 0, cookTime: 0, done: false, speedMul: speedMul[t] || 1, x: stPos[i], y: 640 };
+      }
     }
     function spawn() {
       let empty = []; for (let i = 0; i < 4; i++)if (!game.passengers[i]) empty.push(i); if (!empty.length) return; let seat = empty[Math.floor(Math.random() * empty.length)]; let n = Math.random() < 0.35 ? 1 : (Math.random() < 0.55 ? 2 : 3), orders = [];// Pick foods - VIP prefers higher-tier items
       let sortedFoods = [...game.availFoods].sort((a, b) => (FOODS[b].price || 0) - (FOODS[a].price || 0));
       let vipPref = sortedFoods.slice(0, Math.ceil(sortedFoods.length / 2));
+      let simplePool = game.availFoods.filter(f => !FOODS[f].prep).length ? game.availFoods.filter(f => !FOODS[f].prep) : game.availFoods;
       let normalPool = [...game.availFoods];
       for (let i = 0; i < n; i++) {
         let f;
@@ -318,26 +326,28 @@
       }
       if (!orders.length) orders = [game.availFoods[0]]; let pat = (game.cfg.pat + Math.random() * 4 - 2) * game.patBonus;// Pick passenger class based on weights
       let clsRoll = Math.random() * 100, cls = 'normal';
-      if (clsRoll < 15) cls = 'vip'; else if (clsRoll < 35) cls = 'impatient'; else if (clsRoll < 40) cls = 'kid';
-      let clsMult = { normal: { pat: 1, reward: 1, orders: 2 }, vip: { pat: 1.5, reward: 2, orders: 3 }, impatient: { pat: 0.6, reward: 1.2, orders: 2 }, kid: { pat: 0.8, reward: 0.8, orders: 1 } };
+      if (clsRoll < 12) cls = 'vip'; else if (clsRoll < 28) cls = 'impatient'; else if (clsRoll < 40) cls = 'kid';
+      let clsMult = { normal: { pat: 1, reward: 1, orders: 2, icon: '' }, vip: { pat: 0.7, reward: 2.5, orders: 3, icon: '👑' }, impatient: { pat: 0.5, reward: 1.3, orders: 2, icon: '⚡' }, kid: { pat: 1.5, reward: 0.6, orders: 1, icon: '🧒', forceSimple: true } };
+      // Redirect kids to simple foods
+      if (cls === 'kid' && simplePool.length) { orders = []; let kidN = 1; for (let i=0;i<kidN;i++) { let f = simplePool[Math.floor(Math.random()*simplePool.length)]; if (!orders.includes(f)) orders.push(f); } }
       let ptype = Math.floor(Math.random() * PASSENGER_TYPES.length);
-      game.passengers[seat] = { seat, orders, remaining: [...orders], patience: 1, decay: 1 / (pat * clsMult[cls].pat), state: 'waiting', eatTimer: 0, anim: 0, satisfaction: 1, bob: 0, ptype, pClass: cls };
+      game.passengers[seat] = { seat, orders, remaining: [...orders], patience: 1, decay: 1 / (pat * clsMult[cls].pat), state: 'waiting', eatTimer: 0, anim: 0, satisfaction: 1, bob: 0, ptype, pClass: cls, rewardMul: clsMult[cls].reward || 1 };
     }
     function addFx(text, x, y, color, size) { game.effects.push({ text, x, y, t: 1.8, color: color || '#FFD200', size: size || 'normal' }); }
     function getCanvasPos(e) { let r = C.getBoundingClientRect(), cx, cy; if (e.touches && e.touches.length) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; } return { x: (cx - r.left) / scale, y: (cy - r.top) / scale }; }
     function getStars(lvlId, score) { let c = findLevel(lvlId); if (!c) return 0; if (score >= c.g3) return 3; if (score >= c.g2) return 2; if (score >= c.g1) return 1; return 0; }
-    function getAvailFoodsForStation(st) { return game.availFoods.filter(f => FOODS[f].station === st); }
+    function getAvailFoodsForStation(st) { if (st === 'board') return game.availFoods.filter(f => FOODS[f].station === 'board' || (FOODS[f].prep && game.tray.includes('prep_'+f))); let direct = game.availFoods.filter(f => FOODS[f].station === st && !FOODS[f].prep); let prepped = game.availFoods.filter(f => FOODS[f].station === st && FOODS[f].prep && game.tray.includes('prep_'+f)); return [...direct, ...prepped]; }
 
     function handleGameClick(px, py) {
       if (game.over) return;
       if (game.paused) { if (px > GW / 2 - 80 && px < GW / 2 + 80) { if (py > 340 && py < 388) { game.paused = false; return; } if (py > 400 && py < 448) { initGame(G.currentLevel); game.paused = false; return; } if (py > 460 && py < 508) { G.scene = 'map'; SFX.stopAllSfx(); SFX.stopBgm(); return; } } return; }
       if (py < 44) { if (py > 8 && py < 36 && px > 10 && px < 54) { game.paused = true; return; } return; }
-      if (game.activeMenu) { for (let b of game.menuBtns) { if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) { let st = game.stations[game.activeMenu]; if (!st.cooking) { let info = FOODS[b.food]; st.cooking = true; st.foodType = b.food; st.cookTime = info.time * st.speedMul; st.progress = 0; st.done = false; SFX.playCook(st.type); } game.activeMenu = null; game.menuBtns = []; SFX.click(); return; } } game.activeMenu = null; game.menuBtns = []; return; }
-      for (let t in STATIONS) { let st = game.stations[t], scfg = STATIONS[t]; let avail = getAvailFoodsForStation(t); if (!avail.length) continue; let sx = scfg.x - 70, sy = scfg.y - 50, sw = 140, sh = 100; if (px >= sx && px <= sx + sw && py >= sy && py <= sy + sh) { if (st.done) { if (game.tray.length < game.trayCap) { game.tray.push(st.foodType); addFx('+' + FOODS[st.foodType].emoji + FOODS[st.foodType].name, px, py - 20, '#32CD32'); SFX.plate(); } else { addFx('托盘满了!', px, py - 20, '#DC3232'); SFX.clatter(); } st.cooking = false; st.foodType = null; st.progress = 0; st.done = false; } else if (!st.cooking) { game.activeMenu = t; game.menuBtns = []; let foods = avail, bw = 76, bh = 40, gap = 6, totalW = foods.length * bw + (foods.length - 1) * gap; let startX = Math.max(5, Math.min(GW - 5 - totalW, scfg.x - totalW / 2)); let by = Math.max(48, scfg.y - 50 - bh - 8); for (let i = 0; i < foods.length; i++)game.menuBtns.push({ food: foods[i], x: startX + i * (bw + gap), y: by, w: bw, h: bh }); SFX.switchSnd(); } return; } }
+      if (game.activeMenu) { for (let b of game.menuBtns) { if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) { let st = game.stations[game.activeMenu]; if (!st.cooking) { let info = FOODS[b.food]; if (info.prep && st.type !== 'board') { let pi = game.tray.indexOf('prep_'+b.food); if (pi>=0) game.tray.splice(pi,1); } st.cooking = true; st.foodType = b.food; st.cookTime = (info.prep && st.type==='board' ? info.time*0.5 : info.time) * st.speedMul; st.progress = 0; st.done = false; SFX.playCook(st.type); } game.activeMenu = null; game.menuBtns = []; SFX.click(); return; } } game.activeMenu = null; game.menuBtns = []; return; }
+      for (let t in game.stations) { let st = game.stations[t]; let avail = getAvailFoodsForStation(t); if (!avail.length) continue; let sx = st.x - 70, sy = st.y - 50, sw = 140, sh = 100; if (px >= sx && px <= sx + sw && py >= sy && py <= sy + sh) { if (st.done) { if (game.tray.length < game.trayCap) { let item = (st.type === 'board' && FOODS[st.foodType] && FOODS[st.foodType].prep) ? ('prep_' + st.foodType) : st.foodType; game.tray.push(item); let itemName = item.startsWith('prep_') ? '🔪'+FOODS[st.foodType].name : FOODS[st.foodType].name; addFx('+' + FOODS[st.foodType].emoji + itemName, px, py - 20, '#32CD32'); SFX.plate(); } else { addFx('托盘满了!', px, py - 20, '#DC3232'); SFX.clatter(); } st.cooking = false; st.foodType = null; st.progress = 0; st.done = false; } else if (!st.cooking) { game.activeMenu = t; game.menuBtns = []; let foods = avail, bw = 76, bh = 40, gap = 6, totalW = foods.length * bw + (foods.length - 1) * gap; let startX = Math.max(5, Math.min(GW - 5 - totalW, st.x - totalW / 2)); let by = Math.max(48, st.y - 50 - bh - 8); for (let i = 0; i < foods.length; i++)game.menuBtns.push({ food: foods[i], x: startX + i * (bw + gap), y: by, w: bw, h: bh }); SFX.switchSnd(); } return; } }
       // Power-up pickup
       for (let i = game.powerups.length - 1; i >= 0; i--) { let pu = game.powerups[i]; if (Math.abs(px - pu.x) < 24 && Math.abs(py - pu.y) < 24) { let pk = pu.type; if (pk === 'instant_cook') { for (let t2 in game.stations) { let s2 = game.stations[t2]; if (s2.cooking && !s2.done) { s2.progress = s2.cookTime; s2.done = true; SFX.plate(); } } } else { game.activePowerup = { type: pk, timer: POWERUPS[pk].duration }; } game.powerups.splice(i, 1); SFX.coin(); addFx(POWERUPS[pk].icon + ' ' + POWERUPS[pk].name + '!', pu.x, pu.y - 20, POWERUPS[pk].color); return; } }
-      for (let i = 0; i < 4; i++) { let p = game.passengers[i]; if (!p || p.state !== 'waiting') continue; let s = SEATS[i]; if (Math.abs(px - s.x) < 50 && Math.abs(py - s.y) < 65) { for (let j = 0; j < game.tray.length; j++) { let ft = game.tray[j]; if (p.remaining.includes(ft)) { p.remaining.splice(p.remaining.indexOf(ft), 1); game.tray.splice(j, 1); let price = Math.floor(FOODS[ft].price * p.satisfaction * game.tipBonus); if (game.fever || (game.activePowerup && game.activePowerup.type === 'double_coins')) price *= 2; game.score += price; game.served++; game.combo++; game.comboTimer = 5.0; if (Math.random() < 0.12) { let pk = Object.keys(POWERUPS); let pu = pk[Math.floor(Math.random() * pk.length)]; let px = 60 + Math.random() * (GW - 120); let py = 480 + Math.random() * 70; game.powerups.push({ type: pu, x: px, y: py, timer: 10 }); } let cb = 0; if (game.combo >= 3) { cb = game.combo * 5; game.score += cb; } if (game.combo >= 5 && !game.fever) { game.fever = true; game.feverTimer = 8; SFX.voice('power_up'); addFx('🔥 FEVER MODE! 🔥', GW / 2, 300, '#FF9600', 'big'); SFX.fever(); } let txt = '+' + price; let tier = ''; if (game.combo >= 17) tier = ' PERFECT!'; else if (game.combo >= 12) tier = ' INCREDIBLE!'; else if (game.combo >= 8) tier = ' AMAZING!'; else if (game.combo >= 5) tier = ' GREAT!'; else if (game.combo >= 3) tier = ' Good!'; if (cb) txt += ' x' + game.combo + tier; else if (tier) txt += tier; if (p.satisfaction > 1) txt += ' 😊'; if (p.pClass === 'vip' && !(save.achievements || {}).vip_serve) { save.achievements = save.achievements || {}; save.achievements.vip_serve = true; game.achievementPopups = game.achievementPopups || []; game.achievementPopups.push({ ...ACHIEVEMENTS.vip_serve, timer: 4 }); } addFx(txt, s.x, s.y - 80, '#FFD200'); SFX.coin(); checkAchievements(); if (!p.remaining.length) { p.state = 'eating'; p.eatTimer = 1.8; p.satisfaction = p.patience > 0.7 ? 1.5 : (p.patience > 0.4 ? 1 : 0.5); } return; } } return; } }
-      let trayY = 770; for (let i = 0; i < game.tray.length; i++) { let fx = GW / 2 - game.tray.length * 28 + i * 56 + 28; if (Math.abs(px - fx) < 24 && Math.abs(py - trayY) < 24) { game.tray.splice(i, 1); addFx('丢弃', px, py - 15, '#DC3232'); SFX.clatter(); return; } }
+      for (let i = 0; i < 4; i++) { let p = game.passengers[i]; if (!p || p.state !== 'waiting') continue; let s = SEATS[i]; if (Math.abs(px - s.x) < 50 && Math.abs(py - s.y) < 65) { for (let j = 0; j < game.tray.length; j++) { let ft = game.tray[j]; if (ft.startsWith('prep_')) continue; if (p.remaining.includes(ft)) { p.remaining.splice(p.remaining.indexOf(ft), 1); game.tray.splice(j, 1); let price = Math.floor(FOODS[ft].price * p.satisfaction * game.tipBonus * (p.rewardMul || 1)); if (game.fever || (game.activePowerup && game.activePowerup.type === 'double_coins')) price *= 2; game.score += price; game.served++; game.combo++; game.comboTimer = 5.0; if (Math.random() < 0.12) { let pk = Object.keys(POWERUPS); let pu = pk[Math.floor(Math.random() * pk.length)]; let px = 60 + Math.random() * (GW - 120); let py = 480 + Math.random() * 70; game.powerups.push({ type: pu, x: px, y: py, timer: 10 }); } let cb = 0; if (game.combo >= 3) { cb = game.combo * 5; game.score += cb; } if (game.combo >= 5 && !game.fever) { game.fever = true; game.feverTimer = 8; SFX.voice('power_up'); addFx('🔥 FEVER MODE! 🔥', GW / 2, 300, '#FF9600', 'big'); SFX.fever(); } let txt = '+' + price; let tier = ''; if (game.combo >= 17) tier = ' PERFECT!'; else if (game.combo >= 12) tier = ' INCREDIBLE!'; else if (game.combo >= 8) tier = ' AMAZING!'; else if (game.combo >= 5) tier = ' GREAT!'; else if (game.combo >= 3) tier = ' Good!'; if (cb) txt += ' x' + game.combo + tier; else if (tier) txt += tier; if (p.satisfaction > 1) txt += ' 😊'; if (p.pClass === 'vip' && !(save.achievements || {}).vip_serve) { save.achievements = save.achievements || {}; save.achievements.vip_serve = true; game.achievementPopups = game.achievementPopups || []; game.achievementPopups.push({ ...ACHIEVEMENTS.vip_serve, timer: 4 }); } addFx(txt, s.x, s.y - 80, '#FFD200'); SFX.coin(); for (let ci = 0; ci < 6; ci++) game.coinFlies.push({ x: s.x, y: s.y - 40, vx: (Math.random()-0.5)*3, vy: -3-Math.random()*2, life: 1, tx: GW - 40, ty: 18 }); checkAchievements(); if (!p.remaining.length) { p.state = 'eating'; p.eatTimer = 1.8; p.satisfaction = p.patience > 0.7 ? 1.5 : (p.patience > 0.4 ? 1 : 0.5); } return; } } return; } }
+      let trayY = 770; for (let i = 0; i < game.tray.length; i++) { let fx = GW / 2 - game.tray.length * 28 + i * 56 + 28; if (Math.abs(px - fx) < 24 && Math.abs(py - trayY) < 24) { game.tray.splice(i, 1); addFx('🗑️', px, py - 15, '#DC3232'); SFX.clatter(); return; } } if (game.tray.length > 0 && Math.abs(px - (GW - 35)) < 20 && Math.abs(py - trayY) < 20) { game.tray.pop(); addFx('🗑️', GW - 35, trayY - 15, '#DC3232'); SFX.clatter(); return; }
     }
     function handleClick(px, py) {
       if (G.scene === 'menu') { if (px > GW / 2 - 100 && px < GW / 2 + 100 && py > 460 && py < 510) { G.scene = 'map'; SFX.init(); SFX.start(); SFX.playBgm(); } return; }
@@ -366,8 +376,10 @@
       if (G.scene === 'game') { handleGameClick(px, py); return; }
       if (G.scene === 'result') { if (px > GW / 2 - 80 && px < GW / 2 + 80 && py > 580 && py < 630) { G.scene = 'map'; SFX.click(); SFX.playBgm(); } return; }
     }
-    C.addEventListener('touchstart', e => { e.preventDefault(); try { let p = getCanvasPos(e); handleClick(p.x, p.y); } catch (e) { errMsg = 'Click: ' + e.message; console.error(e); } }, { passive: false });
+    C.addEventListener('touchstart', e => { e.preventDefault(); try { let p = getCanvasPos(e); handleClick(p.x, p.y); _touchLastY = e.touches[0].clientY; } catch (e) { errMsg = 'Click: ' + e.message; console.error(e); } }, { passive: false });
     C.addEventListener('mousedown', e => { try { let p = getCanvasPos(e); handleClick(p.x, p.y); } catch (e) { errMsg = 'Click: ' + e.message; console.error(e); } });
+    let _touchLastY = 0;
+    C.addEventListener('touchmove', e => { e.preventDefault(); if (G.scene === 'map' || G.scene === 'shop') { let ty = e.touches[0].clientY, dy = _touchLastY - ty; _touchLastY = ty; if (G.scene === 'map') { G.mapScroll = (G.mapScroll || 0) + dy / scale; let maxScroll = Math.max(0, CHAPTERS.length * 90 + (G.expandedChapter !== null ? CHAPTERS[G.expandedChapter].levels.length * 48 + 50 : 0) - GH + 150); G.mapScroll = Math.max(0, Math.min(maxScroll, G.mapScroll)); } else if (G.scene === 'shop') { G.shopScroll = (G.shopScroll || 0) + dy / scale; let keys = Object.keys(UPGRADES); let totalH = keys.length * 62 + 5 + 12 + 5 * 32 + 8 + 22 + 48 + 88 + 42 + 20; let maxScroll = Math.max(0, totalH - GH + 120); G.shopScroll = Math.max(0, Math.min(maxScroll, G.shopScroll)); } } }, { passive: false });
     window.addEventListener('keydown', e => { if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { if (G.scene === 'game') { if (game.paused) game.paused = false; else game.paused = true; } } });
     C.addEventListener('wheel', e => { if (G.scene === 'map') { G.mapScroll = (G.mapScroll || 0) + e.deltaY * 0.5; let maxScroll = Math.max(0, CHAPTERS.length * 90 + (G.expandedChapter !== null ? CHAPTERS[G.expandedChapter].levels.length * 48 + 50 : 0) - GH + 150); G.mapScroll = Math.max(0, Math.min(maxScroll, G.mapScroll)); e.preventDefault(); } else if (G.scene === 'shop') { G.shopScroll = (G.shopScroll || 0) + e.deltaY * 0.5; let keys = Object.keys(UPGRADES); let totalH = keys.length * 62 + 5 + 12 + 5 * 32 + 8 + 22 + 48 + 88 + 42 + 20; let maxScroll = Math.max(0, totalH - GH + 120); G.shopScroll = Math.max(0, Math.min(maxScroll, G.shopScroll)); e.preventDefault(); } }, { passive: false });
 
@@ -395,6 +407,7 @@
       else if (anyCooking) { if (game.chefTimer > 0.4) { game.chefTimer = 0; game.chefFrame = game.chefFrame === 2 ? 3 : 2; } }
       else { if (game.chefTimer > 0.8) { game.chefTimer = 0; game.chefFrame = game.chefFrame === 0 ? 1 : 0; } }
       for (let i = game.effects.length - 1; i >= 0; i--) { game.effects[i].t -= dt; game.effects[i].y -= 35 * dt; if (game.effects[i].t <= 0) game.effects.splice(i, 1); }
+      for (let i = game.coinFlies.length - 1; i >= 0; i--) { let c = game.coinFlies[i]; c.life -= dt; let ax = (c.tx - c.x) * 0.08; let ay = (c.ty - c.y) * 0.08; c.vx += ax; c.vy += ay; c.x += c.vx; c.y += c.vy; if (c.life <= 0 || (Math.abs(c.x - c.tx) < 10 && Math.abs(c.y - c.ty) < 10)) game.coinFlies.splice(i, 1); }
       // Power-up timers
       for (let i = game.powerups.length - 1; i >= 0; i--) { game.powerups[i].timer -= dt; if (game.powerups[i].timer <= 0) game.powerups.splice(i, 1); }
       if (game.activePowerup) { game.activePowerup.timer -= dt; if (game.activePowerup.timer <= 0) game.activePowerup = null; }
@@ -439,17 +452,7 @@
     function drawFoodImg(ft, cx, cy, r) {
       X.save(); X.beginPath(); X.arc(cx, cy, r, 0, Math.PI * 2); X.closePath(); X.clip();
       let info = FOODS[ft];
-      let src = IMG.foodSrc[ft];
-      let sheet = null;
-      if (src) {
-        if (src.sheet === 'icons') sheet = IMG.foodIcons;
-        else if (src.sheet === 'sheet') sheet = IMG.foodSheet;
-        else sheet = IMG.foodIcons; // fallback
-      }
-      if (sheet && sheet.complete && sheet.naturalWidth > 0 && src) {
-        X.imageSmoothingEnabled = true;
-        X.drawImage(sheet, src.sx, src.sy, src.sw, src.sh, cx - r, cy - r, r * 2, r * 2);
-      } else if (IMG.tiles[ft] && IMG.tiles[ft].complete && IMG.tiles[ft].naturalWidth > 0) {
+      if (IMG.tiles[ft] && IMG.tiles[ft].complete && IMG.tiles[ft].naturalWidth > 0) {
         let sz = r * 2; X.imageSmoothingEnabled = false;
         X.drawImage(IMG.tiles[ft], cx - sz / 2, cy - sz / 2, sz, sz);
       } else {
@@ -480,6 +483,14 @@
           p.vx = (Math.random() - 0.5) * 12; p.vy = -15 - Math.random() * 25;
           p.color = Math.random() < 0.4 ? 'rgba(255,120,20,0.6)' : 'rgba(255,200,50,0.5)';
           p.size = 3 + Math.random() * 4;
+        } else if (type === 'board') {
+          p.vx = (Math.random() - 0.5) * 18; p.vy = -18 - Math.random() * 25;
+          p.color = Math.random() < 0.5 ? 'rgba(139,195,74,0.6)' : 'rgba(255,255,255,0.5)';
+          p.size = 2 + Math.random() * 3;
+        } else if (type === 'fridge') {
+          p.vx = (Math.random() - 0.5) * 10; p.vy = -25 - Math.random() * 20;
+          p.color = Math.random() < 0.5 ? 'rgba(255,128,171,0.5)' : 'rgba(255,255,255,0.6)';
+          p.size = 2 + Math.random() * 3;
         } else {
           p.vx = (Math.random() - 0.5) * 10; p.vy = -20 - Math.random() * 25;
           p.color = 'rgba(255,255,255,0.5)'; p.size = 2 + Math.random() * 2;
@@ -560,7 +571,7 @@
       drawCloud(80 + Math.sin(t) * 20, 120, 40, 16, 0.06); drawCloud(350 + Math.sin(t + 1) * 25, 90, 50, 18, 0.05); drawCloud(420 + Math.sin(t + 2) * 15, 200, 35, 12, 0.04);
       drawAirplaneSilhouette(380 + Math.sin(t * 0.5) * 30, 160, 60, 0.06);
       drawAirplaneSilhouette(100 + Math.sin(t * 0.3 + 1) * 40, 300, 45, 0.04);
-      if (IMG.chefIdle) { X.save(); X.globalAlpha = 0.08; X.drawImage(IMG.chefIdle, GW / 2 - 80, 220, 160, 140); X.globalAlpha = 1; X.restore(); }
+      if (IMG.chefIdle) { X.save(); X.globalAlpha = 0.08; X.drawImage(IMG.chefIdle, GW / 2 - 80, 340, 160, 140); X.globalAlpha = 1; X.restore(); }
       drawDecoCorner(20, 20, 25, false, false, 'rgba(255,210,0,0.2)'); drawDecoCorner(GW - 20, 20, 25, true, false, 'rgba(255,210,0,0.2)');
       drawDecoCorner(20, GH - 20, 25, false, true, 'rgba(255,210,0,0.2)'); drawDecoCorner(GW - 20, GH - 20, 25, true, true, 'rgba(255,210,0,0.2)');
       X.save(); X.shadowColor = 'rgba(255,210,0,0.6)'; X.shadowBlur = 30;
@@ -710,30 +721,15 @@
     function drawPassenger(p, x, y) {
       X.save();
       X.fillStyle = 'rgba(0,0,0,0.1)'; X.beginPath(); X.ellipse(x, y + 38, 22, 6, 0, 0, Math.PI * 2); X.fill();
-      let src = IMG.npcSrc[p.ptype];
-      if (IMG.npcSheet && IMG.npcSheet.complete && IMG.npcSheet.naturalWidth > 0 && src) {
-        let drawW = 40, drawH = 70;
-        let dx = x - drawW / 2, dy = y - 38;
-        X.drawImage(IMG.npcSheet, src.sx, src.sy, src.sw, src.sh * 0.55, dx, dy, drawW, drawH);
-        if (p.state === 'angry') {
-          X.strokeStyle = '#DC3232'; X.lineWidth = 2.5;
-          X.beginPath(); X.moveTo(x - 8, y - 24); X.lineTo(x - 2, y - 19); X.moveTo(x - 2, y - 24); X.lineTo(x - 8, y - 19); X.stroke();
-          X.beginPath(); X.moveTo(x + 2, y - 24); X.lineTo(x + 8, y - 19); X.moveTo(x + 8, y - 24); X.lineTo(x + 2, y - 19); X.stroke();
-          X.beginPath(); X.arc(x, y - 9, 7, 0.2, Math.PI - 0.2); X.stroke(); X.lineWidth = 1;
-        } else if (p.state === 'eating') {
-          X.strokeStyle = '#333'; X.lineWidth = 2;
-          X.beginPath(); X.arc(x - 7, y - 24, 4, Math.PI + 0.3, 2 * Math.PI - 0.3); X.stroke();
-          X.beginPath(); X.arc(x + 7, y - 24, 4, Math.PI + 0.3, 2 * Math.PI - 0.3); X.stroke();
-          X.beginPath(); X.arc(x, y - 10, 5, 0, Math.PI * 2); X.stroke(); X.lineWidth = 1;
-        } else {
-          X.fillStyle = '#333'; X.beginPath(); X.arc(x - 7, y - 22, 2.5, 0, Math.PI * 2); X.fill(); X.beginPath(); X.arc(x + 7, y - 22, 2.5, 0, Math.PI * 2); X.fill();
-          X.fillStyle = '#FFF'; X.beginPath(); X.arc(x - 6, y - 23, 1, 0, Math.PI * 2); X.fill(); X.beginPath(); X.arc(x + 8, y - 23, 1, 0, Math.PI * 2); X.fill();
-          X.strokeStyle = '#333'; X.lineWidth = 1.8;
-          if (p.patience > 0.7) { X.beginPath(); X.arc(x, y - 10, 5, 0.1, Math.PI - 0.1); X.stroke(); }
-          else if (p.patience > 0.4) { X.beginPath(); X.moveTo(x - 4, y - 10); X.lineTo(x + 4, y - 10); X.stroke(); }
-          else { X.beginPath(); X.arc(x, y - 7, 5, Math.PI + 0.3, 2 * Math.PI - 0.3); X.stroke(); }
-          X.lineWidth = 1;
-        }
+      let npcImg = null;
+      if (p.state === 'angry') npcImg = IMG.npcImgs['angry'] || IMG.npcImgs['surprised'] || IMG.npcImgs['normal'];
+      else if (p.state === 'eating') npcImg = IMG.npcImgs['happy'] || IMG.npcImgs['love'] || IMG.npcImgs['normal'];
+      else npcImg = IMG.npcImgs['normal'] || IMG.npcImgs['happy'] || IMG.npcImgs['surprised'];
+
+      if (npcImg && npcImg.complete && npcImg.naturalWidth > 0) {
+        let drawW = 65, drawH = 65;
+        let dx = x - drawW / 2, dy = y - 48;
+        X.drawImage(npcImg, dx, dy, drawW, drawH);
       } else {
         let s = PASSENGER_TYPES[p.ptype];
         let bw = s.bodyW, bh = 32;
@@ -772,6 +768,9 @@
           X.lineWidth = 1;
         }
       }
+      X.globalAlpha = 1; X.fillStyle = '#FFF'; X.strokeStyle = 'rgba(0,0,0,0.5)'; X.lineWidth = 2;
+      if (p.state === 'waiting') { let bob = Math.sin(Date.now() / 400 + p.seat) * 3; if (p.patience > 0.7) { X.font = '20px sans-serif'; X.textAlign = 'center'; X.fillText('💕', x, y - 60 + bob); } else if (p.patience < 0.35) { X.font = '20px sans-serif'; X.textAlign = 'center'; X.fillText('💢', x, y - 60 + bob); } }
+      if (p.pClass === 'vip') { X.font = 'bold 13px sans-serif'; X.textAlign = 'center'; X.fillStyle = '#FFD700'; X.fillText('👑VIP', x, y - 65); } else if (p.pClass === 'kid') { X.font = 'bold 13px sans-serif'; X.textAlign = 'center'; X.fillStyle = '#87CEEB'; X.fillText('🧒', x, y - 60); }
       X.restore();
     }
 
@@ -852,7 +851,7 @@
       else if (game._anyDone) { chefImg = IMG.chefDone; chefBounce = Math.sin(Date.now() / 200) * 2; }
       else if (game._anyCooking) { chefImg = IMG.chefCook; chefBounce = Math.sin(Date.now() / 300) * 1.5; }
       else { chefImg = IMG.chefIdle; }
-      if (chefImg && chefImg.complete) { X.save(); X.globalAlpha = 0.5; X.drawImage(chefImg, GW - 95, 400 + chefBounce, 75, 65); X.globalAlpha = 1; X.restore(); }
+      if (chefImg && chefImg.complete) { X.save(); X.globalAlpha = 0.5; X.drawImage(chefImg, GW / 2 - 38, 500 + chefBounce, 75, 65); X.globalAlpha = 1; X.restore(); }
       for (let i = 0; i < 4; i++) {
         let p = game.passengers[i]; if (!p) continue;
         let s = SEATS[i], yOff = Math.floor((1 - p.anim) * 50), y = s.y + yOff + Math.floor(p.bob);
@@ -877,9 +876,9 @@
         if (p.patience > 0) { let fw = Math.max(3, Math.floor(pbw * p.patience)); let pc = p.patience > 0.7 ? '#32CD32' : (p.patience > 0.4 ? '#FFD200' : '#DC3232'); let pc2 = p.patience > 0.7 ? '#228B22' : (p.patience > 0.4 ? '#CC9900' : '#AA2222'); drawGradRR(pbx, pby, fw, pbh, 3.5, pc, pc2); }
         X.strokeStyle = 'rgba(255,255,255,0.15)'; X.lineWidth = 0.5; X.strokeRect(pbx, pby, pbw, pbh);
       }
-      for (let t in STATIONS) {
+      for (let t in game.stations) {
         let st = game.stations[t], scfg = STATIONS[t]; let avail = getAvailFoodsForStation(t); let hasFoods = avail.length > 0;
-        let sx = scfg.x - 70, sy = scfg.y - 50, sw = 140, sh = 100;
+        let sx = st.x - 70, sy = st.y - 50, sw = 140, sh = 100;
         if (st.done) {
           X.save(); let pulse = 0.8 + Math.sin(Date.now() / 200) * 0.2; X.shadowColor = 'rgba(50,205,50,' + pulse * 0.4 + ')'; X.shadowBlur = 20; X.shadowOffsetY = 0;
           drawGradRR(sx, sy, sw, sh, 18, '#5AE85A', '#32CD32', 'rgba(255,255,255,0.5)'); X.restore();
@@ -888,8 +887,8 @@
           X.save(); X.shadowColor = 'rgba(0,0,0,0.3)'; X.shadowBlur = 16; X.shadowOffsetY = 6;
           drawGradRR(sx, sy, sw, sh, 18, scfg.color, scfg.color2, 'rgba(255,255,255,0.35)'); X.restore();
           let shine = X.createLinearGradient(sx, sy, sx, sy + sh * 0.35); shine.addColorStop(0, 'rgba(255,255,255,0.3)'); shine.addColorStop(1, 'rgba(255,255,255,0)'); drawRR(sx + 2, sy + 1, sw - 4, sh * 0.35, 16, shine, null);
-          let innerGlow = X.createRadialGradient(scfg.x, scfg.y - 10, 0, scfg.x, scfg.y - 10, 50); innerGlow.addColorStop(0, 'rgba(255,255,255,0.12)'); innerGlow.addColorStop(1, 'rgba(255,255,255,0)');
-          X.fillStyle = innerGlow; X.beginPath(); X.ellipse(scfg.x, scfg.y - 10, 50, 35, 0, 0, Math.PI * 2); X.fill();
+          let innerGlow = X.createRadialGradient(st.x, st.y - 10, 0, st.x, st.y - 10, 50); innerGlow.addColorStop(0, 'rgba(255,255,255,0.12)'); innerGlow.addColorStop(1, 'rgba(255,255,255,0)');
+          X.fillStyle = innerGlow; X.beginPath(); X.ellipse(st.x, st.y - 10, 50, 35, 0, 0, Math.PI * 2); X.fill();
           let borderGlow = X.createLinearGradient(sx, sy, sx + sw, sy + sh); borderGlow.addColorStop(0, 'rgba(255,255,255,0.15)'); borderGlow.addColorStop(0.5, 'rgba(255,255,255,0)'); borderGlow.addColorStop(1, 'rgba(255,255,255,0.08)');
           X.strokeStyle = borderGlow; X.lineWidth = 2; X.beginPath(); X.moveTo(sx + 18, sy); X.lineTo(sx + sw - 18, sy); X.quadraticCurveTo(sx + sw, sy, sx + sw, sy + 18); X.lineTo(sx + sw, sy + sh - 18); X.quadraticCurveTo(sx + sw, sy + sh, sx + sw - 18, sy + sh); X.lineTo(sx + 18, sy + sh); X.quadraticCurveTo(sx, sy + sh, sx, sy + sh - 18); X.lineTo(sx, sy + 18); X.quadraticCurveTo(sx, sy, sx + 18, sy); X.closePath(); X.stroke();
         } else {
@@ -897,25 +896,25 @@
           drawGradRR(sx, sy, sw, sh, 18, '#3a3a4e', '#2a2a3e', 'rgba(255,255,255,0.08)'); X.restore();
         }
         X.textAlign = 'center'; X.textBaseline = 'middle';
-        X.save(); X.shadowColor = 'rgba(0,0,0,0.3)'; X.shadowBlur = 3; X.shadowOffsetY = 1; X.font = '22px sans-serif'; X.fillText(scfg.icon, scfg.x - 38, scfg.y - 22); X.restore();
-        X.fillStyle = hasFoods ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.3)'; X.font = 'bold 14px sans-serif'; X.fillText(scfg.name, scfg.x + 12, scfg.y - 22);
+        X.save(); X.shadowColor = 'rgba(0,0,0,0.3)'; X.shadowBlur = 3; X.shadowOffsetY = 1; X.font = '22px sans-serif'; X.fillText(scfg.icon, st.x - 38, st.y - 22); X.restore();
+        X.fillStyle = hasFoods ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.3)'; X.font = 'bold 14px sans-serif'; X.fillText(scfg.name, st.x + 12, st.y - 22);
         if (st.cooking) {
-          let bw = sw - 24, bh = 14, bx = scfg.x - bw / 2, by = scfg.y - 6;
+          let bw = sw - 24, bh = 14, bx = st.x - bw / 2, by = st.y - 6;
           drawRR(bx, by, bw, bh, 7, 'rgba(0,0,0,0.12)', null);
           let ratio = st.progress / st.cookTime, fw = Math.max(2, Math.floor(bw * ratio));
           if (fw > 0) { let bc = st.done ? '#32CD32' : '#50A0FF'; let bc2 = st.done ? '#228B22' : '#3070CC'; drawGradRR(bx, by, fw, bh, 7, bc, bc2); }
           X.strokeStyle = 'rgba(255,255,255,0.15)'; X.lineWidth = 0.5; X.strokeRect(bx, by, bw, bh);
-          drawFoodImg(st.foodType, scfg.x, scfg.y + 20, 14);
-          if (st.done) { let floatY = Math.sin(Date.now() / 300) * 3; X.save(); X.shadowColor = 'rgba(50,205,50,0.6)'; X.shadowBlur = 12; X.fillStyle = '#228B22'; X.font = 'bold 14px sans-serif'; X.fillText('✅ 点击取餐', scfg.x, scfg.y - 46 + floatY); X.restore(); }
-          if (!st.done && Math.random() < 0.3) { spawnParticles(scfg.x, scfg.y - 30, t, 1); }
+          drawFoodImg(st.foodType, st.x, st.y + 20, 14);
+          if (st.done) { let floatY = Math.sin(Date.now() / 300) * 3; X.save(); X.shadowColor = 'rgba(50,205,50,0.6)'; X.shadowBlur = 12; X.fillStyle = '#228B22'; X.font = 'bold 14px sans-serif'; X.fillText('✅ 点击取餐', st.x, st.y - 46 + floatY); X.restore(); }
+          if (!st.done && Math.random() < 0.3) { spawnParticles(st.x, st.y - 30, t, 1); }
         } else if (hasFoods) {
-          X.font = '18px sans-serif'; let emojis = avail.map(f => FOODS[f].emoji).join(' '); X.fillText(emojis, scfg.x, scfg.y + 2);
-          X.fillStyle = 'rgba(0,0,0,0.3)'; X.font = 'bold 11px sans-serif'; X.fillText('👆 点击制作', scfg.x, scfg.y + 22);
+          X.font = '18px sans-serif'; let emojis = avail.map(f => FOODS[f].emoji).join(' '); X.fillText(emojis, st.x, st.y + 2);
+          X.fillStyle = 'rgba(0,0,0,0.3)'; X.font = 'bold 11px sans-serif'; X.fillText('👆 点击制作', st.x, st.y + 22);
           let tapT = Date.now() / 600; let tapA = 0.15 + Math.sin(tapT) * 0.1;
           X.strokeStyle = 'rgba(255,255,255,' + tapA + ')'; X.lineWidth = 1.5; X.setLineDash([4, 4]);
-          X.beginPath(); X.ellipse(scfg.x, scfg.y + 10, 45, 25, 0, 0, Math.PI * 2); X.stroke(); X.setLineDash([]);
+          X.beginPath(); X.ellipse(st.x, st.y + 10, 45, 25, 0, 0, Math.PI * 2); X.stroke(); X.setLineDash([]);
         }
-        else { X.fillStyle = 'rgba(255,255,255,0.25)'; X.font = '12px sans-serif'; X.fillText('🔒 尚未解锁', scfg.x, scfg.y + 4); X.font = '10px sans-serif'; X.fillText('通过更多关卡', scfg.x, scfg.y + 22); }
+        else { X.fillStyle = 'rgba(255,255,255,0.25)'; X.font = '12px sans-serif'; X.fillText('🔒 尚未解锁', st.x, st.y + 4); X.font = '10px sans-serif'; X.fillText('通过更多关卡', st.x, st.y + 22); }
       }
       for (let b of game.menuBtns) {
         let info = FOODS[b.food];
@@ -951,7 +950,8 @@
       let trayShine = X.createLinearGradient(tx, trayY - 22, tx, trayY - 10); trayShine.addColorStop(0, 'rgba(255,255,255,0.3)'); trayShine.addColorStop(1, 'rgba(255,255,255,0)'); drawRR(tx + 2, trayY - 20, tw - 4, 12, 14, trayShine, null);
       X.strokeStyle = 'rgba(160,120,70,0.3)'; X.lineWidth = 1; X.beginPath(); X.moveTo(tx + 16, trayY - 2); X.lineTo(tx + tw - 16, trayY - 2); X.stroke();
       X.fillStyle = 'rgba(80,50,20,0.6)'; X.font = 'bold 11px sans-serif'; X.textAlign = 'left'; X.textBaseline = 'middle'; X.fillText('🍽️ ' + game.tray.length + '/' + game.trayCap, tx + 8, trayY - 10);
-      for (let i = 0; i < game.tray.length; i++) { let fx = tx + 30 + i * 56, fy = trayY + 12; drawFoodImg(game.tray[i], fx, fy, 14); }
+      for (let i = 0; i < game.tray.length; i++) { let fx = tx + 30 + i * 56, fy = trayY + 12; let titem = game.tray[i]; if (titem.startsWith('prep_')) { let realId = titem.slice(5); X.globalAlpha = 0.5; drawFoodImg(realId, fx, fy, 14); X.globalAlpha = 1; X.font = '10px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText('🔪', fx + 8, fy - 8); } else { drawFoodImg(titem, fx, fy, 14); } }
+      if (game.tray.length > 0) { X.font = '24px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText('🗑️', GW - 35, trayY); X.fillStyle = 'rgba(255,255,255,0.3)'; X.font = '9px sans-serif'; X.fillText('删除', GW - 35, trayY + 22); }
       let hudGrd = X.createLinearGradient(0, 0, 0, 48); hudGrd.addColorStop(0, 'rgba(10,10,30,0.97)'); hudGrd.addColorStop(0.7, 'rgba(20,20,45,0.92)'); hudGrd.addColorStop(1, 'rgba(30,30,55,0.85)');
       X.fillStyle = hudGrd; X.fillRect(0, 0, GW, 48);
       let hudBottom = X.createLinearGradient(0, 46, 0, 50); hudBottom.addColorStop(0, 'rgba(100,140,200,0.15)'); hudBottom.addColorStop(1, 'rgba(100,140,200,0)'); X.fillStyle = hudBottom; X.fillRect(0, 46, GW, 4);
@@ -988,6 +988,7 @@
       if (game.paused) { drawPauseOverlay(); }
       drawParticles();
       for (let fx of game.effects) { let alpha = Math.min(1, fx.t / 0.5); X.globalAlpha = alpha; X.save(); X.shadowColor = fx.color; X.shadowBlur = 8; X.fillStyle = fx.color; X.font = (fx.size === 'big' ? 'bold 24px' : 'bold 16px') + ' sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(fx.text, fx.x, fx.y); X.restore(); X.globalAlpha = 1; }
+      for (let c of game.coinFlies) { let alpha = c.life; X.globalAlpha = alpha; X.font = '16px sans-serif'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText('💎', c.x, c.y); X.globalAlpha = 1; }
       // Achievement popups
       if (game.achievementPopups && game.achievementPopups.length) {
         for (let i = 0; i < Math.min(game.achievementPopups.length, 3); i++) {
