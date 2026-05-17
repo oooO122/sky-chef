@@ -1,4 +1,7 @@
 .claude/
+.codex/
+.playwright-mcp/
+cc_temp/
 *.py
 test_render.png
 _sprite_viewer.html

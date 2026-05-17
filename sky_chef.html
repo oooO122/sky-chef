@@ -50,7 +50,7 @@
     function regenEnergy() { let now = Date.now(), el = (now - save.lastEnergyTime) / 1000, rg = Math.floor(el / 180); if (rg > 0 && save.energy < save.maxEnergy) { save.energy = Math.min(save.maxEnergy, save.energy + rg); save.lastEnergyTime = now; saveToDisk(); } }
     regenEnergy();
 
-    const IMG = { chefIdle: null, chefCook: null, chefDone: null, chefIcon: null, tiles: {}, npcImgs: {} };
+    const IMG = { chefIdle: null, chefCook: null, chefDone: null, chefIcon: null, tiles: {}, npcImgs: {}, scene: {} };
     function loadImages() {
       let ci0 = new Image(); ci0.onload = function () { IMG.chefIdle = ci0; }; ci0.onerror = function () { }; ci0.src = 'assets/sprites/chef/Chef_W1.png';
       let ci1 = new Image(); ci1.onload = function () { IMG.chefCook = ci1; }; ci1.onerror = function () { }; ci1.src = 'assets/sprites/chef/Chef_A1.png';
@@ -76,6 +76,17 @@
         img.onload = function () { IMG.npcImgs[k] = img; };
         img.onerror = function () { };
         img.src = 'assets/sprites/npc/yierbubu/' + npcEmotions[k];
+      }
+      const sceneFiles = {
+        cabinBg: 'cabin_bg.png',
+        stationBl: 'station_bl.png', stationBc: 'station_bc.png', stationBr: 'station_br.png',
+        stationBl2: 'station_bl2.png', stationBc2: 'station_bc2.png'
+      };
+      for (let k in sceneFiles) {
+        let img = new Image();
+        img.onload = function () { IMG.scene[k] = img; };
+        img.onerror = function () { };
+        img.src = 'assets/sprites/scene/' + sceneFiles[k];
       }
     }
     loadImages();
@@ -798,10 +809,17 @@
 
     function drawGame() {
       X.clearRect(0, 0, GW, GH); let cfg = game.cfg;
-      // Draw cabin interior
+      let cabinBgImg = IMG.scene.cabinBg;
+      if (cabinBgImg && cabinBgImg.complete && cabinBgImg.naturalWidth > 0) {
+        let chTheme = (findChapter(G.currentLevel) || {}).theme || '#87CEEB';
+        let skyGrd = X.createLinearGradient(0, 0, 0, 120); skyGrd.addColorStop(0, chTheme); skyGrd.addColorStop(1, '#D0E8FF');
+        X.fillStyle = skyGrd; X.fillRect(0, 44, GW, 76);
+        let cabinGrd = X.createLinearGradient(0, 120, 0, 460); cabinGrd.addColorStop(0, '#F5F0E8'); cabinGrd.addColorStop(0.5, '#EDE7DB'); cabinGrd.addColorStop(1, '#E5DDD0');
+        X.fillStyle = cabinGrd; X.fillRect(0, 120, GW, 340);
+        X.drawImage(cabinBgImg, 0, 44, cabinBgImg.naturalWidth, cabinBgImg.naturalHeight);
+      } else {
       let cabinGrd = X.createLinearGradient(0, 120, 0, 410); cabinGrd.addColorStop(0, '#F5F0E8'); cabinGrd.addColorStop(0.5, '#EDE7DB'); cabinGrd.addColorStop(1, '#E5DDD0');
       X.fillStyle = cabinGrd; X.fillRect(0, 120, GW, 290);
-      // Sky and clouds overlay
       let skyGrd = X.createLinearGradient(0, 44, 0, 120); let chTheme = (findChapter(G.currentLevel) || {}).theme || '#87CEEB'; skyGrd.addColorStop(0, chTheme); skyGrd.addColorStop(1, '#D0E8FF');
       X.fillStyle = skyGrd; X.fillRect(0, 44, GW, 76);
       let t = Date.now() / 1000;
@@ -834,6 +852,7 @@
         X.fillStyle = 'rgba(255,255,255,0.08)'; X.fillRect(s.x - 26, s.y + 22, 52, 4);
         X.fillStyle = 'rgba(0,0,0,0.12)'; X.fillRect(s.x - 3, s.y + 18, 6, 24);
         X.fillStyle = 'rgba(80,100,130,0.3)'; X.fillRect(s.x - 30, s.y + 48, 60, 3);
+      }
       }
       X.strokeStyle = 'rgba(0,0,0,0.06)'; X.lineWidth = 1; X.beginPath(); X.moveTo(0, 410); X.lineTo(GW, 410); X.stroke();
       // Shadow under cabin ceiling
@@ -887,13 +906,24 @@
         if (p.patience > 0) { let fw = Math.max(3, Math.floor(pbw * p.patience)); let pc = p.patience > 0.7 ? '#32CD32' : (p.patience > 0.4 ? '#FFD200' : '#DC3232'); let pc2 = p.patience > 0.7 ? '#228B22' : (p.patience > 0.4 ? '#CC9900' : '#AA2222'); drawGradRR(pbx, pby, fw, pbh, 3.5, pc, pc2); }
         X.strokeStyle = 'rgba(255,255,255,0.15)'; X.lineWidth = 0.5; X.strokeRect(pbx, pby, pbw, pbh);
       }
+      const STATION_SPRITE_MAP = { drink: 'stationBr', board: 'stationBl2', fryer: 'stationBc', oven: 'stationBc2', fridge: 'stationBl' };
       for (let t in game.stations) {
         let st = game.stations[t], scfg = STATIONS[t]; let avail = getAvailFoodsForStation(t); let hasFoods = avail.length > 0;
         let sx = st.x - 70, sy = st.y - 50, sw = 140, sh = 100;
+        let stSpriteKey = STATION_SPRITE_MAP[t];
+        let stSprite = stSpriteKey ? IMG.scene[stSpriteKey] : null;
+        let useSprite = stSprite && stSprite.complete && stSprite.naturalWidth > 0 && hasFoods && !st.done;
         if (st.done) {
           X.save(); let pulse = 0.8 + Math.sin(Date.now() / 200) * 0.2; X.shadowColor = 'rgba(50,205,50,' + pulse * 0.4 + ')'; X.shadowBlur = 20; X.shadowOffsetY = 0;
           drawGradRR(sx, sy, sw, sh, 18, '#5AE85A', '#32CD32', 'rgba(255,255,255,0.5)'); X.restore();
           let doneShine = X.createLinearGradient(sx, sy, sx, sy + sh * 0.3); doneShine.addColorStop(0, 'rgba(255,255,255,0.35)'); doneShine.addColorStop(1, 'rgba(255,255,255,0)'); drawRR(sx, sy, sw, sh * 0.3, 18, doneShine, null);
+        } else if (useSprite) {
+          X.save(); X.shadowColor = 'rgba(0,0,0,0.3)'; X.shadowBlur = 12; X.shadowOffsetY = 4;
+          let sprW = stSprite.naturalWidth, sprH = stSprite.naturalHeight;
+          let drawW = sw, drawH = Math.floor(sprH / sprW * sw);
+          let drawX = st.x - drawW / 2, drawY = st.y - drawH / 2;
+          X.drawImage(stSprite, drawX, drawY, drawW, drawH);
+          X.restore();
         } else if (hasFoods) {
           X.save(); X.shadowColor = 'rgba(0,0,0,0.3)'; X.shadowBlur = 16; X.shadowOffsetY = 6;
           drawGradRR(sx, sy, sw, sh, 18, scfg.color, scfg.color2, 'rgba(255,255,255,0.35)'); X.restore();
